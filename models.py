@@ -49,13 +49,16 @@ class PerceptronModel(object):
         Train the perceptron until convergence.
         """
         "*** YOUR CODE HERE ***"
-
-        alpha = 1
-        while dataset.get_validation_accuracy() != 1:
-
+        perfectPrediction = False
+        while not perfectPrediction:
+            perfectPrediction = True
             for x, y in dataset.iterate_once(batch_size=1):
-                if self.get_prediction(x) == 0: #given x has correct feature function
-                    x.update(direction, alpha)
+                y_true = nn.as_scalar(y)
+                if self.get_prediction(x) != y_true:
+                    perfectPrediction = False
+                    direction = x
+                    multiplier = y_true
+                    self.get_weights().update(direction, multiplier)
 
 
 class RegressionModel(object):
@@ -67,6 +70,9 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.dimensions = 1
+        self.weights = nn.Parameter(1, self.dimensions)
+
 
     def run(self, x):
         """
@@ -78,6 +84,12 @@ class RegressionModel(object):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** YOUR CODE HERE ***"
+        #takes in x values, and outputs predicted value based on our function
+        # how do we predict values?
+        # this is basically get prediction....
+        return
+
+
 
     def get_loss(self, x, y):
         """
@@ -90,12 +102,28 @@ class RegressionModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        predicted_y = self.run(x) #this is right
+        return nn.SquareLoss(predicted_y, y) #this looks right too:)
+
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        
+        self.weights = nn.Parameter(1,)
+
+        converged = False
+
+        while self.get_loss(x,y) > someNumber:  #keep going
+            converged = True
+            for w in self.weights:
+                x= 0 #wrong
+                y = 0 # wrong
+                #updated w
+
+
 
 class DigitClassificationModel(object):
     """
