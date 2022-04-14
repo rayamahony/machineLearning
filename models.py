@@ -70,8 +70,30 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-        self.dimensions = 1
-        self.weights = nn.Parameter(1, self.dimensions)
+
+        self.hiddenLayerSize = 100 #adjust this
+        self.batchSize = 200
+        self.learningRate = 0.012 #this is alpha 0.01
+        #self.numHiddenLayers = 1 #just start here
+        self.i = 1 #because its  a scalar number
+        self.b = 1 #this should have the same b dimension as input
+
+
+        self.hiddenNodes = [] #list of list of tuples [W1, B1, W2, B2]
+        #flattenList [W1, B1, W2, B2, W3, B3]
+        self.outputSize = 1
+        # weights have dimensions i * h : where i=1 is the dimension of our input vectors x, & number of hidden layers = h
+        # bias dimensions b * i:
+        self.outputNode = nn.Parameter(1,1) #dimensions of output, (1,1) bc scalar
+
+        self.hiddenNodes.append(nn.Parameter(self.i, self.hiddenLayerSize))
+        self.hiddenNodes.append(nn.Parameter(self.b, self.hiddenLayerSize))
+
+        #middle ones would have self.hiddenLayerSize for both
+
+        self.hiddenNodes.append(nn.Parameter(self.hiddenLayerSize, 1)) #2nd/last layer
+        self.hiddenNodes.append(nn.Parameter(self.b, 1)) #2nd layer
+
 
 
     def run(self, x):
@@ -87,8 +109,23 @@ class RegressionModel(object):
         #takes in x values, and outputs predicted value based on our function
         # how do we predict values?
         # this is basically get prediction....
-        return
 
+        currentState = x
+
+
+        weight1 = self.hiddenNodes[0]
+        bias1 = self.hiddenNodes[1]
+        currentState = nn.Linear(currentState, weight1)
+        currentState = nn.AddBias(currentState, bias1)
+        currentState = nn.ReLU(currentState)
+
+        weight2 = self.hiddenNodes[2]
+        bias2 = self.hiddenNodes[3]
+        currentState = nn.Linear(currentState, weight2)
+        currentState = nn.AddBias(currentState, bias2)
+
+
+        return currentState
 
 
     def get_loss(self, x, y):
@@ -111,17 +148,19 @@ class RegressionModel(object):
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
-        
-        self.weights = nn.Parameter(1,)
+        #get dimensions of x,y
+        # the second is the hidden variable?
 
-        converged = False
-
-        while self.get_loss(x,y) > someNumber:  #keep going
-            converged = True
-            for w in self.weights:
-                x= 0 #wrong
-                y = 0 # wrong
-                #updated w
+        for x,y in dataset.iterate_forever(self.batchSize):
+            loss_num = nn.as_scalar(self.get_loss(x,y))
+            if loss_num < 0.02:
+                break
+            else:
+                loss = self.get_loss(x,y)
+                loss_num = nn.as_scalar(loss)
+                gradients = nn.gradients(loss, self.hiddenNodes)
+                for i in range(len(self.hiddenNodes)):
+                    self.hiddenNodes[i].update(gradients[i], -self.learningRate)
 
 
 
