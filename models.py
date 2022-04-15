@@ -74,25 +74,24 @@ class RegressionModel(object):
         self.hiddenLayerSize = 100 #adjust this
         self.batchSize = 200
         self.learningRate = 0.012 #this is alpha 0.01
-        #self.numHiddenLayers = 1 #just start here
+        #self.numHiddenLayers = 2 #just start here
         self.i = 1 #because its  a scalar number
         self.b = 1 #this should have the same b dimension as input
 
 
-        self.hiddenNodes = [] #list of list of tuples [W1, B1, W2, B2]
-        #flattenList [W1, B1, W2, B2, W3, B3]
+        self.hiddenNodes = [] #just a list [W1, B1, W2, B2]
         self.outputSize = 1
         # weights have dimensions i * h : where i=1 is the dimension of our input vectors x, & number of hidden layers = h
         # bias dimensions b * i:
-        self.outputNode = nn.Parameter(1,1) #dimensions of output, (1,1) bc scalar
+        #self.outputNode = nn.Parameter(1,1) #dimensions of output, (1,1) bc scalar
 
         self.hiddenNodes.append(nn.Parameter(self.i, self.hiddenLayerSize))
         self.hiddenNodes.append(nn.Parameter(self.b, self.hiddenLayerSize))
 
         #middle ones would have self.hiddenLayerSize for both
 
-        self.hiddenNodes.append(nn.Parameter(self.hiddenLayerSize, 1)) #2nd/last layer
-        self.hiddenNodes.append(nn.Parameter(self.b, 1)) #2nd layer
+        self.hiddenNodes.append(nn.Parameter(self.hiddenLayerSize, self.b)) #2nd/last layer
+        self.hiddenNodes.append(nn.Parameter(self.b, self.b)) #2nd layer
 
 
 
@@ -108,15 +107,14 @@ class RegressionModel(object):
         "*** YOUR CODE HERE ***"
         #takes in x values, and outputs predicted value based on our function
         # how do we predict values?
-        # this is basically get prediction....
-
+        # this is basically get prediction...
         currentState = x
-
 
         weight1 = self.hiddenNodes[0]
         bias1 = self.hiddenNodes[1]
         currentState = nn.Linear(currentState, weight1)
         currentState = nn.AddBias(currentState, bias1)
+
         currentState = nn.ReLU(currentState)
 
         weight2 = self.hiddenNodes[2]
@@ -181,6 +179,28 @@ class DigitClassificationModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.hiddenLayerSize = 100 #adjust this
+        self.batchSize = 200 #adjust this
+        self.learningRate = 1 #adjust this
+        #self.numHiddenLayers = 2 #just start here
+
+        self.i = 784 #because its  a scalar number ?
+        self.b = 1 #this should have the same b dimension as  ...
+
+
+        self.hiddenNodes = [] #list [W1, B1, W2, B2]
+        # weights have dimensions i * h : where i=1 is the dimension of our input vectors x, & number of hidden layers = h
+        # bias dimensions b * i:
+        self.outputNode = nn.Parameter(1,1) #dimensions of output, (1,1) bc scalar
+
+
+        self.hiddenNodes.append(nn.Parameter(self.i, self.hiddenLayerSize)) #W1
+        self.hiddenNodes.append(nn.Parameter(1, self.hiddenLayerSize))
+
+        #middle ones would have self.hiddenLayerSize for both
+
+        self.hiddenNodes.append(nn.Parameter(self.hiddenLayerSize, 10)) #2nd/last layer
+        self.hiddenNodes.append(nn.Parameter(1, 10)) #2nd layer
 
     def run(self, x):
         """
@@ -198,6 +218,21 @@ class DigitClassificationModel(object):
         """
         "*** YOUR CODE HERE ***"
 
+        currentState = x
+
+        weight1 = self.hiddenNodes[0]
+        bias1 = self.hiddenNodes[1]
+        currentState = nn.Linear(currentState, weight1)
+        currentState = nn.AddBias(currentState, bias1)
+        currentState = nn.ReLU(currentState)
+
+        weight2 = self.hiddenNodes[2]
+        bias2 = self.hiddenNodes[3]
+        currentState = nn.Linear(currentState, weight2)
+        currentState = nn.AddBias(currentState, bias2)
+        return currentState
+
+
     def get_loss(self, x, y):
         """
         Computes the loss for a batch of examples.
@@ -212,12 +247,26 @@ class DigitClassificationModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        predicted_y = self.run(x) #this is right
+        return nn.SoftmaxLoss(predicted_y, y) #this looks right too:)
+
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        for x,y in dataset.iterate_forever(self.batchSize):
+            self.learningRate = self.learningRate*0.999
+            if dataset.get_validation_accuracy() > 0.972:
+                break
+            else:
+                loss = self.get_loss(x,y)
+                gradients = nn.gradients(loss, self.hiddenNodes)
+
+                for i in range(len(self.hiddenNodes)):
+                    self.hiddenNodes[i].update(gradients[i], - self.learningRate)
+
 
 class LanguageIDModel(object):
     """
