@@ -179,20 +179,18 @@ class DigitClassificationModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-        self.hiddenLayerSize = 100 #adjust this
+        self.hiddenLayerSize = 50 #adjust this
         self.batchSize = 200 #adjust this
         self.learningRate = 1 #adjust this
-        #self.numHiddenLayers = 2 #just start here
 
-        self.i = 784 #because its  a scalar number ?
-        self.b = 1 #this should have the same b dimension as  ...
+        self.i = 784
+        self.b = 1
 
 
         self.hiddenNodes = [] #list [W1, B1, W2, B2]
         # weights have dimensions i * h : where i=1 is the dimension of our input vectors x, & number of hidden layers = h
         # bias dimensions b * i:
-        self.outputNode = nn.Parameter(1,1) #dimensions of output, (1,1) bc scalar
-
+        #self.outputNode = nn.Parameter(1,1) #dimensions of output, (1,1) bc scalar
 
         self.hiddenNodes.append(nn.Parameter(self.i, self.hiddenLayerSize)) #W1
         self.hiddenNodes.append(nn.Parameter(1, self.hiddenLayerSize))
@@ -257,8 +255,9 @@ class DigitClassificationModel(object):
         """
         "*** YOUR CODE HERE ***"
         for x,y in dataset.iterate_forever(self.batchSize):
-            self.learningRate = self.learningRate*0.999
-            if dataset.get_validation_accuracy() > 0.972:
+            if self.learningRate > 0.01:
+                self.learningRate = self.learningRate*0.995
+            if dataset.get_validation_accuracy() > 0.974:
                 break
             else:
                 loss = self.get_loss(x,y)
@@ -286,6 +285,19 @@ class LanguageIDModel(object):
 
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.hiddenLayerSize = 50 #adjust this
+        self.batchSize = 200 #adjust this
+        self.learningRate = 0.3 #adjust this
+
+        self.i = 47 #could be 47
+        self.b = 1
+
+        self.activation = [nn.Parameter(self.i, self.hiddenLayerSize), nn.Parameter(self.b, self.hiddenLayerSize)]
+        self.hidden = [nn.Parameter(self.hiddenLayerSize, self.hiddenLayerSize), nn.Parameter(self.b, self.hiddenLayerSize)]
+        self.rosetta = [nn.Parameter(self.hiddenLayerSize, 5), nn.Parameter(self.b, 5)]
+
+
+
 
     def run(self, xs):
         """
@@ -318,6 +330,29 @@ class LanguageIDModel(object):
         """
         "*** YOUR CODE HERE ***"
 
+        length = len(xs)
+
+        #start applying f()
+        #applying hidden layer 1
+        h1 = nn.Linear(xs[0], self.activation[0])
+        h1 = nn.AddBias(h1, self.activation[1])
+        h1 = nn.ReLU(h1)
+        currentState = h1
+
+        for i in range(1, length):
+            xi = xs[i]
+            xi = nn.Linear(xi, self.activation[0])
+            xi = nn.AddBias(xi, self.activation[1])
+            currentState = nn.Add(xi, nn.Linear(currentState, self.hidden[0]))
+            currentState = nn.AddBias(currentState, self.hidden[1])
+            currentState = nn.ReLU(currentState)
+
+        finalH = nn.Linear(currentState, self.rosetta[0])
+        finalH = nn.AddBias(finalH, self.rosetta[1])
+        return finalH
+
+
+
     def get_loss(self, xs, y):
         """
         Computes the loss for a batch of examples.
@@ -333,9 +368,31 @@ class LanguageIDModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        predicted_y = self.run(xs) #this is right
+        return nn.SoftmaxLoss(predicted_y, y) #this looks right too:)
+
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        for x,y in dataset.iterate_forever(self.batchSize):
+            if self.learningRate > 0.01:
+                self.learningRate = self.learningRate*1
+            if dataset.get_validation_accuracy() > 0.87:
+                break
+            else:
+                allParams = [*self.activation, *self.hidden, *self.rosetta]
+                loss = self.get_loss(x,y)
+                gradients = nn.gradients(loss, allParams)
+                self.activation[0].update(gradients[0], - self.learningRate)
+                self.activation[1].update(gradients[1], - self.learningRate)
+
+
+                self.hidden[0].update(gradients[2], -self.learningRate)
+                self.hidden[1].update(gradients[3], -self.learningRate)
+
+                self.rosetta[0].update(gradients[4], -self.learningRate)
+                self.rosetta[1].update(gradients[5], -self.learningRate)
+
