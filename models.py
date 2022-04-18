@@ -179,8 +179,8 @@ class DigitClassificationModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-        self.hiddenLayerSize = 50 #adjust this
-        self.batchSize = 200 #adjust this
+        self.hiddenLayerSize = 200 #adjust this
+        self.batchSize = 100 #adjust this
         self.learningRate = 1 #adjust this
 
         self.i = 784
@@ -256,7 +256,7 @@ class DigitClassificationModel(object):
         "*** YOUR CODE HERE ***"
         for x,y in dataset.iterate_forever(self.batchSize):
             if self.learningRate > 0.01:
-                self.learningRate = self.learningRate*0.995
+                self.learningRate = self.learningRate*0.999
             if dataset.get_validation_accuracy() > 0.974:
                 break
             else:
@@ -286,7 +286,7 @@ class LanguageIDModel(object):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
         self.hiddenLayerSize = 50 #adjust this
-        self.batchSize = 200 #adjust this
+        self.batchSize = 100 #adjust this
         self.learningRate = 0.3 #adjust this
 
         self.i = 47 #could be 47
@@ -380,7 +380,7 @@ class LanguageIDModel(object):
         for x,y in dataset.iterate_forever(self.batchSize):
             if self.learningRate > 0.01:
                 self.learningRate = self.learningRate*1
-            if dataset.get_validation_accuracy() > 0.87:
+            if dataset.get_validation_accuracy() > 0.85:
                 break
             else:
                 allParams = [*self.activation, *self.hidden, *self.rosetta]
